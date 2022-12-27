@@ -13,14 +13,15 @@ clean:
 
 #  Lint using
 ## flake8: PEP8 based lint
+### there is an error in pytest-flake8
 ## mypy  : type check
 lint:
-	flake8 src test
-	mypy src
+	flake8 catchMinor test
+	pytest --mypy catchMinor
 
 #  formatting
 ## black: formatting
 ## isort: import formatting
 format:
-	black src test
-	isort src test
+	pytest --black catchMinor test
+	pytest --isort catchMinor test
