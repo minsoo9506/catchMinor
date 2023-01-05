@@ -3,20 +3,25 @@ repos:
     rev: 22.12.0
     hooks:
       - id: black
+        exclude: data/|dpcs/|examples/|images/|notebook/
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:
     - id: flake8
+      exclude: data/|dpcs/|examples/|images/|notebook/
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.991
     hooks:
     - id: mypy
+      exclude: data/|dpcs/|examples/|images/|notebook/
   - repo: https://github.com/timothycrosley/isort
     rev: 5.11.4
     hooks:
       - id: isort
+        exclude: data/|dpcs/|examples/|images/|notebook/
   - repo: https://github.com/econchick/interrogate
     rev: 1.5.0
     hooks:
       - id: interrogate
+        exclude: data/|dpcs/|examples/|images/|notebook/
         args: [-v]
