@@ -17,11 +17,11 @@ clean:
 ## mypy  : type check
 lint:
 	flake8 catchMinor test
-	pytest --mypy catchMinor
+	mypy catchMinor
 
 #  formatting
 ## black: formatting
 ## isort: import formatting
 format:
-	pytest --black catchMinor test
-	pytest --isort catchMinor test
+	black catchMinor test
+	isort --profile black catchMinor test
