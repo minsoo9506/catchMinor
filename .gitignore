@@ -9,7 +9,3 @@ __pycache__
 .python-version
 
 .env
-
-.ipynb_checkpoints
-
-lightning_logs
