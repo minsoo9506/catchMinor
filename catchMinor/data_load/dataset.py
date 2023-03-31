@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
@@ -22,7 +20,7 @@ class tabularDataset(Dataset):
     def __len__(self) -> int:
         return self.x.shape[0]
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         return self.x[idx, :], self.y[idx, :]
 
 
@@ -57,7 +55,7 @@ class UnivariateBaseWindowDataset(Dataset):
     def __len__(self) -> int:
         return self.x.shape[0]
 
-    def __getitem__(self, idx: int) -> Tuple[torch.tensor, torch.tensor]:
+    def __getitem__(self, idx: int) -> tuple[torch.tensor, torch.tensor]:
         return self.x[idx, :], self.y[idx, :]
 
 
@@ -85,7 +83,7 @@ class UnivariateLSTMWindowDataset(Dataset):
     def __len__(self) -> int:
         return self.x.shape[0]
 
-    def __getitem__(self, idx: int) -> Tuple[torch.tensor, torch.tensor]:
+    def __getitem__(self, idx: int) -> tuple[torch.tensor, torch.tensor]:
         return self.x[idx, :], self.y[idx, :]
 
 
