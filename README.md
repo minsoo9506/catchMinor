@@ -76,7 +76,7 @@ python -m pip install catchMinor
 ## Implemented Algorithms
 |model|data|desc|
 |:---:|:---:|:---:|
-|AutoEncoder|tabular, time series|MLP|
+|AutoEncoder|tabular, time series|fully-connected layer|
 
 ## Contribute
 - follow gitflow & forkflow
