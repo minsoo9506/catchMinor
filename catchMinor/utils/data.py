@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 
 from catchMinor.utils.debug import get_logger
@@ -7,7 +5,7 @@ from catchMinor.utils.debug import get_logger
 
 def normal_only_train_split_tabular(
     X: np.ndarray, y: np.ndarray, train_ratio_in_normal: float
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """split data into 2 part, normal only train data and mix test data
 
     Args:
@@ -16,7 +14,7 @@ def normal_only_train_split_tabular(
         train_ratio_in_normal (float): train dat ratio in normal data
 
     Returns:
-        Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: normal_X_train, mix_X_test, normal_y_train, mix_y_test
+        tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: normal_X_train, mix_X_test, normal_y_train, mix_y_test
     """
     logger = get_logger("train_test_split_tabular", "INFO")
     normal, abnormal = y == 0, y == 1

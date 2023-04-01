@@ -4,10 +4,10 @@ from setuptools import find_packages, setup
 
 # Package meta-data
 NAME = "catchMinor"
-DESCRIPTION = "model library for imbalanced-learning & anomaly detection in tabular, time series data"
+DESCRIPTION = "model library for imbalanced-learning & anomaly detection in tabular, time series, graph data"
 EMAIL = "ghktjd15gh@gmail.com"
 AUTHOR = "minsoo9506"
-REQUIRES_PYTHON = "==3.9"
+REQUIRES_PYTHON = "==3.10"
 
 # Load the package's VERSION file as a dictionary
 about = {}

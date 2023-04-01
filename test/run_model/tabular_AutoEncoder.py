@@ -1,11 +1,15 @@
 import argparse
 import os
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-import pytorch_lightning as pl
 import torch
+from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning.callbacks import EarlyStopping, RichProgressBar
+from pytorch_lightning.callbacks.progress.rich_progress import RichProgressBarTheme
+from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
 
 from catchMinor.data_load.dataset import tabularDataset
@@ -41,10 +45,14 @@ def define_argparser():
     else:
         config.cuda = "gpu"
 
+    current_time = str(datetime.today()).split(".")[0]
+    config.current_time = current_time
+
     return config
 
 
 if __name__ == "__main__":
+    seed_everything(42)
     config = define_argparser()
     data_path = Path(__file__).parents[2] / "data" / "tabular"
 
@@ -74,15 +82,32 @@ if __name__ == "__main__":
     model = LitBaseAutoEncoder(model_config, optim_config, loss_func_config)
 
     # trainer
-    early_stopping_callback = pl.callbacks.EarlyStopping(
-        monitor="val_loss", mode="min", patience=2
+    TensorBoard_logger = TensorBoardLogger(
+        save_dir="./log", name=config.model, version=config.current_time
     )
-    trainer = pl.Trainer(
-        log_every_n_steps=4,
+
+    rich_progress_bar = RichProgressBar(
+        theme=RichProgressBarTheme(
+            description="Anomaly Detection",
+            progress_bar="green1",
+            progress_bar_finished="green1",
+            progress_bar_pulse="#6206E0",
+            batch_progress="green_yellow",
+            time="grey82",
+            processing_speed="grey82",
+            metrics="grey82",
+        ),
+        leave=True,
+    )
+
+    early_stopping_callback = EarlyStopping(monitor="val_loss", mode="min", patience=2)
+    trainer = Trainer(
+        log_every_n_steps=1,
         accelerator=config.cuda,
+        logger=TensorBoard_logger,
         max_epochs=config.epochs,
         deterministic=True,
-        callbacks=[early_stopping_callback],
+        callbacks=[early_stopping_callback, rich_progress_bar],
         check_val_every_n_epoch=1,
     )
 

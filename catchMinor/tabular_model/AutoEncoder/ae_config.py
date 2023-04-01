@@ -1,9 +1,3 @@
-# import os
-# import sys
-
-# current_path = os.getcwd()
-# sys.path.append(current_path)
-
 from catchMinor.base.base_config import loss_func_config, model_config, optimizer_config
 
 

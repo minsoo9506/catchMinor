@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Optional
 
 import torch
 from pydantic import BaseModel, Field, validator
@@ -24,9 +24,9 @@ class model_config(BaseModel):
 
 class optimizer_config(BaseModel):
     optimizer: str = "Adam"
-    optimizer_params: Optional[Dict] = {}
+    optimizer_params: Optional[dict] = {}
     lr_scheduler: Optional[str] = None
-    lr_scheduler_params: Optional[Dict] = {}
+    lr_scheduler_params: Optional[dict] = {}
     generated_time: datetime = Field(
         default_factory=datetime.now, description="time when instance is generated"
     )
@@ -52,7 +52,7 @@ class optimizer_config(BaseModel):
 
 class loss_func_config(BaseModel):
     loss_fn: str
-    loss_fn_params: Optional[Dict] = {}
+    loss_fn_params: Optional[dict] = {}
     generated_time: datetime = Field(
         default_factory=datetime.now, description="time when instance is generated"
     )

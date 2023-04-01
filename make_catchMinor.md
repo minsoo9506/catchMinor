@@ -1,7 +1,10 @@
 - To do list
-  - [ ] 기존의 다른 모델들 구현
+  - [ ] master에 push되면 git actioin으로 저절로 pypi에 배포 되도록 만들어보기
+  - [ ] 기존의 다른 모델들 추가 구현
   - [ ] time series Transformer 모델 구현
+  - [ ] graph model 구현
   - [ ] 모델 벤치마크 데이터 train & inference flow 만들기
+  - [ ] Lit model refactor & 추가 기능들 추가하기 (epoch_end)
 
 # 과정
 - catchMinor용 가상환경 생성 완료
