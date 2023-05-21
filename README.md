@@ -66,17 +66,23 @@ trainer.fit(model, train_loader, valid_loader)
 ```
 
 
-## Installation
+## Installation (not yet)
+- recommend to use `pyenv` virtualenv
 ```bash
 python -m pip install catchMinor
 ```
 
 ## Benchmark
+- tabluar data: [ADBench](https://github.com/Minqi824/ADBench)
+    - (paper) [ADBench: Anomaly Detection Benchmark](https://arxiv.org/abs/2206.09426)
+- time series data: UCR Time Series Anomaly Archive
+    - (paper) [Current Time Series Anomaly Detection Benchmarks are Flawed and are Creating the Illusion of Progress](https://arxiv.org/abs/2009.13807)
 
 ## Implemented Algorithms
 |model|data|desc|
 |:---:|:---:|:---:|
 |AutoEncoder|tabular, time series|fully-connected layer|
+|VAE|tabular, time series|fully-connected layer|
 
 ## Contribute
 - follow gitflow & forkflow
