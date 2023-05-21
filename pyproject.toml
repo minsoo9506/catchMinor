@@ -37,3 +37,26 @@ filterwarnings = [
     # ignore use of unregistered marks, because we use many to test the implementation
     "ignore::_pytest.warning_types.PytestUnknownMarkWarning",
 ]
+
+[tool.mypy]
+# warn_unreachable = True
+pretty = True
+warn_unused_ignores = True
+follow_imports = skip
+show_error_context = True
+warn_incomplete_stub = True
+ignore_missing_imports = True
+check_untyped_defs = True
+cache_dir = /dev/null
+# Cannot enable this one as we still allow defining functions without any types.
+# disallow_untyped_defs = True
+warn_redundant_casts = True
+warn_unused_configs = True
+strict_optional = True
+
+[tool.flake8]
+max-line-length = 88
+ignore = D100, D104, E203, E266, E501, E402, E261, W503
+exclude = .git, __pycache__, .env, .pytest_cache
+count = True
+docstring-convention=google

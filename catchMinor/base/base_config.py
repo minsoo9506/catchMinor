@@ -51,7 +51,7 @@ class optimizer_config(BaseModel):
 
 
 class loss_func_config(BaseModel):
-    loss_fn: str
+    loss_fn: str = "in_model"
     loss_fn_params: Optional[dict] = {}
     generated_time: datetime = Field(
         default_factory=datetime.now, description="time when instance is generated"
@@ -59,6 +59,8 @@ class loss_func_config(BaseModel):
 
     @validator("loss_fn")
     def valid_loss_fn(cls, v: str):
+        if v == "in_model":
+            return v
         try:
             _ = getattr(torch.nn, v)
         except AttributeError:

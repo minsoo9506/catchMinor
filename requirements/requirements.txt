@@ -6,14 +6,14 @@ isoduration==20.11.0
 isort==5.11.4
 jsonpointer==2.3
 jupyter==1.0.0
+lightning==2.0.1.post0
 mypy==0.991
 pandas==1.5.3
 path==16.6.0
 pip-chill==1.0.1
 pre-commit==2.21.0
-pydantic==1.10.4
-pytorch-lightning==1.9.0
 scikit-learn==1.2.1
+tensorboard==2.12.2
 torchaudio==0.13.1
 torchvision==0.14.1
 uri-template==1.2.0
