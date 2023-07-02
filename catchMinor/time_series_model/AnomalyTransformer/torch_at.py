@@ -23,7 +23,7 @@ class AnomalyAttention(nn.Module):
         V: torch.Tensor,
         mask: torch.Tensor = None,
         dk: int = 64,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         # |Sigma| = (batch_size, input_length, 1)
         # |Q|     = (batch_size, input_length, dk)
         # |K|     = (batch_size, input_length, dk)
@@ -42,11 +42,11 @@ class AnomalyAttention(nn.Module):
             / (math.sqrt(2 * math.pi) * Sigma)
             * torch.exp(-(dist**2) / (2 * Sigma**2))
         )
-        row_sum = torch.sum(kernel_weight, dim=2)
+        row_sum = torch.sum(kernel_weight, dim=2).unsqueeze(dim=2)
         prior_association = kernel_weight / row_sum
         # |prior-prior_association| = (batch_size, input_length, input_length)
 
-        # get Series-Association``
+        # get Series-Association
         w = torch.bmm(Q, K.transpose(1, 2))
         # |w| = (batch_size, input_length, input_length)
         if mask is not None:
@@ -71,7 +71,7 @@ class MultiHead(nn.Module):
         self.n_splits = n_splits
 
         # we don't have to declare each linear layer, separately
-        self.Sigma_linear = nn.Linear(n_splits, n_splits, bias=False)
+        self.Sigma_linear = nn.Linear(hidden_size, n_splits, bias=False)
         self.Q_linear = nn.Linear(hidden_size, hidden_size, bias=False)
         self.K_linear = nn.Linear(hidden_size, hidden_size, bias=False)
         self.V_linear = nn.Linear(hidden_size, hidden_size, bias=False)
@@ -80,7 +80,7 @@ class MultiHead(nn.Module):
         self.attn = AnomalyAttention()
 
     def forward(self, Sigma, Q, K, V, mask=None):
-        # |Sigma| = (batch_size, input_length, n_splits)
+        # |Sigma| = (batch_size, input_length, hidden_size)
         # |Q|     = (batch_size, input_length, hidden_size)
         # |K|     = (batch_size, input_length, hidden_size)
         # |V|     = (batch_size, input_length, hidden_size) = |K|
@@ -151,8 +151,8 @@ class EncoderBlock(nn.Module):
         self.fc_norm = nn.LayerNorm(hidden_size)
         self.fc_dropout = nn.Dropout(dropout_p)
 
-    def forward(self, x, mask):
-        prior_association, series_association, out = self.attn(x, x, x, mask)
+    def forward(self, x, mask=None):
+        prior_association, series_association, out = self.attn(x, x, x, x, mask)
         z = self.attn_norm(self.attn_dropout(out) + x)
         encoder_out = self.fc_norm(self.fc_dropout(self.fc(z)) + z)
         # |z| = (batch_size, n, hidden_size)
@@ -188,6 +188,7 @@ class AnomalyTransformer(nn.Module):
 
     def __init__(self, config: AnomalyTransformer_config):
         self.input_length = config.input_length
+        self.max_length = config.input_length
         self.feature_dim = config.feature_dim
         self.hidden_size = config.hidden_size
         self.n_splits = config.n_splits
