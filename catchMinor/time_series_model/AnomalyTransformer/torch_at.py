@@ -160,6 +160,29 @@ class EncoderBlock(nn.Module):
         return prior_association, series_association, encoder_out, mask
 
 
+class DataEmbedding(nn.Module):
+    """data embedding class"""
+
+    def __init__(self, feature_dim: int, hidden_size: int):
+        super().__init__()
+        padding = 1 if torch.__version__ >= "1.5.0" else 2
+        self.tokenConv = nn.Conv1d(
+            in_channels=feature_dim,
+            out_channels=hidden_size,
+            kernel_size=3,
+            padding=padding,
+            padding_mode="circular",
+            bias=False,
+        )
+        nn.init.kaiming_normal_(
+            self.tokenConv.weight, mode="fan_in", nonlinearity="leaky_relu"
+        )
+
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        x = self.tokenConv(x.permute(0, 2, 1)).transpose(1, 2)
+        return x
+
+
 class AnomalyTransformer(nn.Module):
     """AnomalyTransformer: https://arxiv.org/pdf/2110.02642.pdf"""
 
@@ -173,7 +196,7 @@ class AnomalyTransformer(nn.Module):
 
         super().__init__()
 
-        self.emb_enc = nn.Embedding(config.input_length, config.hidden_size)
+        self.emb_enc = DataEmbedding(config.feature_dim, config.hidden_size)
         self.emb_dropout = nn.Dropout(config.dropout_p)
 
         self.pos_enc = self._generate_pos_enc(config.hidden_size, config.input_length)
