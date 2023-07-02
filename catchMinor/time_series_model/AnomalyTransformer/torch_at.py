@@ -242,10 +242,8 @@ class AnomalyTransformer(nn.Module):
 
         return x
 
-    def forward(self, x, y):
-        # x = y, for reconstruction
+    def forward(self, x):
         # |x| = (batch_size, input_length)
-        # |y| = (batch_size, input_length)
 
         x = self.emb_dropout(self._position_encoding(self.emb_enc(x)))
         prior_association_list = []
