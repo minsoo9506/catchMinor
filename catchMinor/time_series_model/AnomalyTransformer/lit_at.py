@@ -26,6 +26,7 @@ class LitAnomalyTransformer(LitBaseModel):
         loss_func_config: AnomalyTransformer_loss_func_config,
     ):
         super().__init__(model_config, optimizer_config, loss_func_config)
+        self.automatic_optimization = False
         logger = get_logger(logger_setLevel="INFO")
         logger.info("AnomalyTransforme layer is made.")
         self.model = AnomalyTransformer(model_config)
@@ -57,15 +58,17 @@ class LitAnomalyTransformer(LitBaseModel):
         optimizer = self.optimizers()
         # maximize phase
         loss1 = recon_loss - self.Lambda * series_loss
+        optimizer.zero_grad()
         self.manual_backward(loss1)
         optimizer.step()
-        optimizer.zero_grad()
         # minimize phase
         loss2 = recon_loss + self.Lambda * prior_loss
+        optimizer.zero_grad()
         self.manual_backward(loss2)
         optimizer.step()
-        optimizer.zero_grad()
 
+        self.log("maximize phase train_loss", loss1, on_epoch=True, prog_bar=True)
+        self.log("minimize phase train_loss", loss2, on_epoch=True, prog_bar=True)
         self.log("train_loss", loss1 + loss2, on_epoch=True, prog_bar=True)
 
     def validation_step(self, batch, batch_idx):
