@@ -56,20 +56,18 @@ class LitAnomalyTransformer(LitBaseModel):
         series_loss /= len(prior_association_list)
         # optimize
         optimizer = self.optimizers()
-        # maximize phase
+        # loss
         loss1 = recon_loss - self.Lambda * series_loss
-        optimizer.zero_grad()
-        self.manual_backward(loss1)
-        optimizer.step()
-        # minimize phase
         loss2 = recon_loss + self.Lambda * prior_loss
+        # maximize, minimize phase
         optimizer.zero_grad()
+        self.manual_backward(loss1, retain_graph=True)
         self.manual_backward(loss2)
         optimizer.step()
 
-        self.log("maximize phase train_loss", loss1, on_epoch=True, prog_bar=True)
-        self.log("minimize phase train_loss", loss2, on_epoch=True, prog_bar=True)
-        self.log("train_loss", loss1 + loss2, on_epoch=True, prog_bar=True)
+        self.log("max_phase_train_loss", loss1, on_epoch=True, prog_bar=True)
+        self.log("min_phase_train_loss", loss2, on_epoch=True, prog_bar=True)
+        self.log("train_loss", -loss1 + loss2, on_epoch=True, prog_bar=True)
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
@@ -95,7 +93,9 @@ class LitAnomalyTransformer(LitBaseModel):
         # minimize phase
         loss2 = recon_loss + self.Lambda * prior_loss
 
-        self.log("valid_loss", loss1 + loss2, on_epoch=True, prog_bar=True)
+        self.log("max_phase_valid_loss", loss1, on_epoch=True, prog_bar=True)
+        self.log("min_phase_valid_loss", loss2, on_epoch=True, prog_bar=True)
+        self.log("valid_loss", -loss1 + loss2, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         pass
@@ -124,6 +124,6 @@ class LitAnomalyTransformer(LitBaseModel):
                 ).reshape(return_shape)
         association_loss /= len(prior_association_list)
         recon_loss = torch.mean((y - y_hat) ** 2, dim=-1).reshape(return_shape)
-        anomaly_score = nn.Softmax(-association_loss) * recon_loss
+        anomaly_score = nn.functional.softmax(-association_loss) * recon_loss
         # |anomaly_score| = (batch_size * input_length, )
         return anomaly_score
