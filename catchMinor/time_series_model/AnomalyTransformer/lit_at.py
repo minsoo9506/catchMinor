@@ -124,6 +124,6 @@ class LitAnomalyTransformer(LitBaseModel):
                 ).reshape(return_shape)
         association_loss /= len(prior_association_list)
         recon_loss = torch.mean((y - y_hat) ** 2, dim=-1).reshape(return_shape)
-        anomaly_score = nn.Softmax(-association_loss) * recon_loss
+        anomaly_score = nn.functional.softmax(-association_loss) * recon_loss
         # |anomaly_score| = (batch_size * input_length, )
         return anomaly_score
