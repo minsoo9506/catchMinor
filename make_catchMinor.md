@@ -1,10 +1,19 @@
 - To do list
-  - [ ] master에 push되면 git actioin으로 저절로 pypi에 배포 되도록 만들어보기
-  - [ ] 기존의 다른 모델들 추가 구현
-  - [ ] time series Transformer 모델 구현
-  - [ ] graph model 구현
-  - [ ] 모델 벤치마크 데이터 train & inference flow 만들기
-  - [ ] Lit model refactor & 추가 기능들 추가하기 (epoch_end)
+  - [ ] time series feature
+    - [ ] 실제 데이터로 훈련해보기 jupyter로 진행해보자, backward하는 부분에서 문제 발생 ㅠ
+    - [ ] Llinear, Dlinear pred based 모델: https://today-1.tistory.com/60
+  - [ ] XAI 관련 기능 구현
+  - [ ] Matrix Profile 공부 및 기존 라이브러리 이용해서 구현?!
+  - [ ] feature: 모델 벤치마크 데이터 train & inference flow 만들기 (for문으로 데이터 넣고 결과 뽑아내는)
+  - [ ] refactor: python advanced 하게 코드 수정
+
+- git origin 최신화 과정
+```bash
+git fetch upstream  # upstream에서 모든 브랜치 로컬로 다운로드
+git checkout main  # merge하려는 브랜치로 이동
+git merge upstream/main  # merge
+git push origin main  # origin으로 push해서 최신화
+```
 
 # 과정
 - catchMinor용 가상환경 생성 완료

@@ -5,22 +5,20 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import torch
 from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, RichProgressBar
+from pytorch_lightning.callbacks import RichProgressBar
 from pytorch_lightning.callbacks.progress.rich_progress import RichProgressBarTheme
 from pytorch_lightning.loggers import TensorBoardLogger
-from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 
 from catchMinor.data_load.dataset import tabularDataset
-from catchMinor.tabular_model.AutoEncoder.ae_config import (
-    AutoEncoder_config,
-    AutoEncoder_loss_func_config,
-    AutoEncoder_optimizer_config,
+from catchMinor.tabular_model.GAN.gan_config import (
+    GAN_config,
+    GAN_loss_func_config,
+    GAN_optimizer_config,
 )
-from catchMinor.tabular_model.AutoEncoder.lit_ae import LitBaseAutoEncoder
+from catchMinor.tabular_model.GAN.lit_gan import LitGAN
 from catchMinor.utils.data import normal_only_train_split_tabular
 
 
@@ -28,7 +26,7 @@ def define_argparser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--project", default="Tabular Anomaly Detection")
-    parser.add_argument("--model", default="LitBaseAutoEncoder")
+    parser.add_argument("--model", default="LitBaseGAN")
     parser.add_argument(
         "--batch_size",
         type=int,
@@ -71,31 +69,25 @@ if __name__ == "__main__":
         mix_y_test,
     ) = normal_only_train_split_tabular(X, y, 0.8)
 
-    scaler = StandardScaler()
-    scaler.fit(normal_X_train)
-    scaled_normal_X_train = scaler.transform(normal_X_train)
-    scaled_mix_X_test = scaler.transform(mix_X_test)
-
-    train_dataset = tabularDataset(
-        scaled_normal_X_train, deepcopy(scaled_normal_X_train)
-    )
-    valid_dataset = tabularDataset(scaled_mix_X_test, deepcopy(scaled_mix_X_test))
+    train_dataset = tabularDataset(normal_X_train, deepcopy(normal_X_train))
+    valid_dataset = tabularDataset(mix_X_test, deepcopy(mix_X_test))
 
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size)
     valid_loader = DataLoader(valid_dataset, batch_size=config.batch_size)
 
-    model_config = AutoEncoder_config(features_dim_list=[9, 4])
-    optim_config = AutoEncoder_optimizer_config()
-    loss_func_config = AutoEncoder_loss_func_config(loss_fn="MSELoss")
+    model_config = GAN_config(
+        generator_dim_list=[2, 4, 9], discriminator_dim_list=[9, 4, 1]
+    )
+    optim_config = GAN_optimizer_config()
+    loss_func_config = GAN_loss_func_config()
 
-    model = LitBaseAutoEncoder(model_config, optim_config, loss_func_config)
+    model = LitGAN(model_config, optim_config, loss_func_config)
 
-    # callback: tensorboard
+    # trainer
     TensorBoard_logger = TensorBoardLogger(
         save_dir="./log", name=config.model, version=config.current_time
     )
 
-    # callback: progrss bar
     rich_progress_bar = RichProgressBar(
         theme=RichProgressBarTheme(
             description="Anomaly Detection",
@@ -110,50 +102,15 @@ if __name__ == "__main__":
         leave=True,
     )
 
-    # callback: save the best model in every epochs
-    checkpoint_callback = ModelCheckpoint(
-        monitor="train_loss",
-        dirpath="./checkpoints/",
-        filename="model_name-{epoch}-{valid_acc:.4f}",
-        save_top_k=1,
-        mode="min",
-    )
-
-    # callback: early stop
-    early_stopping_callback = EarlyStopping(monitor="val_loss", mode="min", patience=2)
-
-    # trainer
     trainer = Trainer(
         log_every_n_steps=1,
         accelerator=config.cuda,
         logger=TensorBoard_logger,
         max_epochs=config.epochs,
         deterministic=True,
-        callbacks=[early_stopping_callback, rich_progress_bar, checkpoint_callback],
+        callbacks=[rich_progress_bar],
         check_val_every_n_epoch=1,
     )
 
     # fit the model
     trainer.fit(model, train_loader, valid_loader)
-
-    # load best model (min train_loss)
-    checkpoint = torch.load(checkpoint_callback.best_model_path)
-    model.load_state_dict(checkpoint["state_dict"])
-
-    preds = []
-    with torch.no_grad():
-        model.eval()
-        # predict
-        for batch in valid_loader:
-            x, y = batch
-            pred = model(x).detach().numpy().tolist()
-            preds += pred
-
-        # anomaly score
-        anomaly_scores = []
-        for batch in valid_loader:
-            anomaly_score = model.get_anomaly_score(batch).detach().numpy().tolist()
-            anomaly_scores += anomaly_score
-
-    result = pd.DataFrame({"label": mix_y_test, "anomaly_score": anomaly_scores})
-    print(result.groupby("label")["anomaly_score"].mean())

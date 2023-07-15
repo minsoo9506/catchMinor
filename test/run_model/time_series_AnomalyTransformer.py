@@ -1,8 +1,5 @@
 import argparse
-import os
-from copy import deepcopy
 from datetime import datetime
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -14,29 +11,28 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 
-from catchMinor.data_load.dataset import tabularDataset
-from catchMinor.tabular_model.AutoEncoder.ae_config import (
-    AutoEncoder_config,
-    AutoEncoder_loss_func_config,
-    AutoEncoder_optimizer_config,
+from catchMinor.data_load.dataset import WindowDataset
+from catchMinor.time_series_model.AnomalyTransformer.at_config import (
+    AnomalyTransformer_config,
+    AnomalyTransformer_loss_func_config,
+    AnomalyTransformer_optimizer_config,
 )
-from catchMinor.tabular_model.AutoEncoder.lit_ae import LitBaseAutoEncoder
-from catchMinor.utils.data import normal_only_train_split_tabular
+from catchMinor.time_series_model.AnomalyTransformer.lit_at import LitAnomalyTransformer
 
 
 def define_argparser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--project", default="Tabular Anomaly Detection")
-    parser.add_argument("--model", default="LitBaseAutoEncoder")
+    parser.add_argument("--project", default="Time Series Anomaly Detection")
+    parser.add_argument("--model", default="LitAnomalyTransformer")
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=512,
+        default=1024,
         help="input batch size for training (default: 512)",
     )
     parser.add_argument(
-        "--epochs", type=int, default=5, help="number of epochs to train (default: 5)"
+        "--epochs", type=int, default=10, help="number of epochs to train (default: 2)"
     )
     parser.add_argument("--cuda", type=int, default=0, help="0 for cpu -1 for all gpu")
 
@@ -54,41 +50,52 @@ def define_argparser():
 
 
 if __name__ == "__main__":
-    seed_everything(42)
     config = define_argparser()
-    data_path = Path(__file__).parents[2] / "data" / "tabular"
+    seed_everything(0)
 
-    tmp_data = os.listdir(data_path)[1]
-    print(f"data = {tmp_data}")
-    data_path = str(data_path) + "/" + tmp_data
-    data = np.load(data_path)
-    X, y = data["X"], data["y"]  # |X| = (223, 9)
+    msl_train = np.load("../data/timeseries/AnomalyTransformer/MSL/MSL_train.npy")
+    msl_test_label = np.load(
+        "../data/timeseries/AnomalyTransformer/MSL/MSL_test_label.npy"
+    )
+    msl_test = np.load("../data/timeseries/AnomalyTransformer/MSL/MSL_test.npy")
 
-    (
-        normal_X_train,
-        mix_X_test,
-        normal_y_train,
-        mix_y_test,
-    ) = normal_only_train_split_tabular(X, y, 0.8)
+    anomaly_ratio = msl_test_label.sum() / len(msl_test_label)
+    print(f"Anomaly Ratio in test dataset is {anomaly_ratio * 100:.2f} %")
 
     scaler = StandardScaler()
-    scaler.fit(normal_X_train)
-    scaled_normal_X_train = scaler.transform(normal_X_train)
-    scaled_mix_X_test = scaler.transform(mix_X_test)
+    scaler.fit(msl_train)
+    scaled_train = scaler.transform(msl_train)
+    scaled_test = scaler.transform(msl_test)
+    train_ratio = 0.8
+    num_train = int(len(scaled_train) * train_ratio)
 
-    train_dataset = tabularDataset(
-        scaled_normal_X_train, deepcopy(scaled_normal_X_train)
+    train = scaled_train[:num_train, :]
+    valid = scaled_train[num_train:, :]
+
+    print(f"train.shape={train.shape}")
+    print(f"valid.shape={valid.shape}")
+    print(f"test.shape={scaled_test.shape}")
+
+    train_dataset = WindowDataset(
+        train, train, window_size=128, overlaps=False, shape="wf"
     )
-    valid_dataset = tabularDataset(scaled_mix_X_test, deepcopy(scaled_mix_X_test))
+    valid_dataset = WindowDataset(
+        valid, valid, window_size=128, overlaps=False, shape="wf"
+    )
+    test_dataset = WindowDataset(
+        scaled_test, scaled_test, window_size=128, overlaps=False, shape="wf"
+    )
 
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size)
     valid_loader = DataLoader(valid_dataset, batch_size=config.batch_size)
+    test_loader = DataLoader(test_dataset, batch_size=config.batch_size)
 
-    model_config = AutoEncoder_config(features_dim_list=[9, 4])
-    optim_config = AutoEncoder_optimizer_config()
-    loss_func_config = AutoEncoder_loss_func_config(loss_fn="MSELoss")
+    # config
+    model_config = AnomalyTransformer_config(feature_dim=55)
+    loss_config = AnomalyTransformer_loss_func_config()
+    optim_config = AnomalyTransformer_optimizer_config()
 
-    model = LitBaseAutoEncoder(model_config, optim_config, loss_func_config)
+    model = LitAnomalyTransformer(model_config, optim_config, loss_config)
 
     # callback: tensorboard
     TensorBoard_logger = TensorBoardLogger(
@@ -112,7 +119,7 @@ if __name__ == "__main__":
 
     # callback: save the best model in every epochs
     checkpoint_callback = ModelCheckpoint(
-        monitor="train_loss",
+        monitor="valid_loss",
         dirpath="./checkpoints/",
         filename="model_name-{epoch}-{valid_acc:.4f}",
         save_top_k=1,
@@ -120,7 +127,9 @@ if __name__ == "__main__":
     )
 
     # callback: early stop
-    early_stopping_callback = EarlyStopping(monitor="val_loss", mode="min", patience=2)
+    early_stopping_callback = EarlyStopping(
+        monitor="valid_loss", mode="min", patience=2
+    )
 
     # trainer
     trainer = Trainer(
@@ -140,20 +149,16 @@ if __name__ == "__main__":
     checkpoint = torch.load(checkpoint_callback.best_model_path)
     model.load_state_dict(checkpoint["state_dict"])
 
-    preds = []
+    # calculate anomaly score
     with torch.no_grad():
         model.eval()
-        # predict
-        for batch in valid_loader:
-            x, y = batch
-            pred = model(x).detach().numpy().tolist()
-            preds += pred
-
-        # anomaly score
         anomaly_scores = []
-        for batch in valid_loader:
+        for batch in test_loader:
             anomaly_score = model.get_anomaly_score(batch).detach().numpy().tolist()
             anomaly_scores += anomaly_score
 
-    result = pd.DataFrame({"label": mix_y_test, "anomaly_score": anomaly_scores})
+    short = min(len(msl_test_label), len(anomaly_scores))
+    result = pd.DataFrame(
+        {"label": msl_test_label[:short], "anomaly_score": anomaly_scores[:short]}
+    )
     print(result.groupby("label")["anomaly_score"].mean())

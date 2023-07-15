@@ -15,12 +15,12 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 
 from catchMinor.data_load.dataset import tabularDataset
-from catchMinor.tabular_model.AutoEncoder.ae_config import (
-    AutoEncoder_config,
-    AutoEncoder_loss_func_config,
-    AutoEncoder_optimizer_config,
+from catchMinor.tabular_model.VAE.lit_vae import LitVAE
+from catchMinor.tabular_model.VAE.vae_config import (
+    VAE_config,
+    VAE_loss_func_config,
+    VAE_optimizer_config,
 )
-from catchMinor.tabular_model.AutoEncoder.lit_ae import LitBaseAutoEncoder
 from catchMinor.utils.data import normal_only_train_split_tabular
 
 
@@ -28,7 +28,7 @@ def define_argparser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--project", default="Tabular Anomaly Detection")
-    parser.add_argument("--model", default="LitBaseAutoEncoder")
+    parser.add_argument("--model", default="LitVAE")
     parser.add_argument(
         "--batch_size",
         type=int,
@@ -84,11 +84,11 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size)
     valid_loader = DataLoader(valid_dataset, batch_size=config.batch_size)
 
-    model_config = AutoEncoder_config(features_dim_list=[9, 4])
-    optim_config = AutoEncoder_optimizer_config()
-    loss_func_config = AutoEncoder_loss_func_config(loss_fn="MSELoss")
+    model_config = VAE_config(features_dim_list=[9, 4])
+    optim_config = VAE_optimizer_config()
+    loss_func_config = VAE_loss_func_config(loss_fn="MSELoss")
 
-    model = LitBaseAutoEncoder(model_config, optim_config, loss_func_config)
+    model = LitVAE(model_config, optim_config, loss_func_config)
 
     # callback: tensorboard
     TensorBoard_logger = TensorBoardLogger(
@@ -146,7 +146,8 @@ if __name__ == "__main__":
         # predict
         for batch in valid_loader:
             x, y = batch
-            pred = model(x).detach().numpy().tolist()
+            pred, _, _ = model(x)
+            pred = pred.detach().numpy().tolist()
             preds += pred
 
         # anomaly score

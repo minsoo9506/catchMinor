@@ -42,20 +42,34 @@ class LitBaseModel(pl.LightningModule):
         x, y = batch
         output = self.model(x)
         loss = self.loss_func(output, y)
-        self.log("train_loss", loss, on_epoch=True)
+        self.log("train_loss", loss, on_epoch=True, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         output = self.model(x)
         loss = self.loss_func(output, y)
-        self.log("val_loss", loss, on_epoch=True)
+        self.log("val_loss", loss, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         x, y = batch
         output = self.model(x)
         loss = self.loss_func(output, y)
-        self.log("test_loss", loss, on_epoch=True)
+        self.log("test_loss", loss, on_epoch=True, prog_bar=True)
+
+    def get_anomaly_score(self, batch) -> torch.Tensor:
+        """get anomaly score
+
+        Args:
+            batch (torch.Tensor): _description_
+
+        Returns:
+            anomaly score (torch.Tensor): mean(abs(true - pred), dim=1)
+        """
+        x, y = batch
+        output = self.model(x)
+        anomaly_score = torch.abs(y - output)
+        return torch.mean(anomaly_score, dim=1)
 
     def _configure_loss_func(self, loss_func_config: loss_func_config):
         loss_func = getattr(torch.nn, loss_func_config.loss_fn)
