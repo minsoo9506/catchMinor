@@ -1,4 +1,5 @@
 from typing import Optional
+
 from catchMinor.base.base_config import loss_func_config, model_config, optimizer_config
 
 
