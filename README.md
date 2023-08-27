@@ -49,7 +49,7 @@ TensorBoard_logger = TensorBoardLogger(
     save_dir="./log", name="AutoEncoder", version="0.1"
 )
 
-early_stopping_callback = EarlyStopping(monitor="val_loss", mode="min", patience=2)
+early_stopping_callback = EarlyStopping(monitor="valid_loss", mode="min", patience=2)
 
 trainer = Trainer(
     log_every_n_steps=1,
@@ -81,8 +81,11 @@ python -m pip install catchMinor
 ## Implemented Algorithms
 |model|data|desc|
 |:---:|:---:|:---:|
-|AutoEncoder|tabular, time series|fully-connected layer|
-|VAE|tabular, time series|fully-connected layer|
+|AutoEncoder|tabular, time series|linear, reconstruction-based|
+|VAE|tabular, time series|linear, reconstruction-based|
+|GAN|tabular, time series|linear, reconstruction-based|
+|AnomalyTransformer|time series|transformer|
+|DLienar|time series|linear, pred-based|
 
 ## Contribute
 - follow gitflow & forkflow
