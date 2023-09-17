@@ -79,6 +79,7 @@ python -m pip install catchMinor
     - (paper) [Current Time Series Anomaly Detection Benchmarks are Flawed and are Creating the Illusion of Progress](https://arxiv.org/abs/2009.13807)
 
 ## Implemented Algorithms
+### Anomaly Detection
 |model|data|desc|
 |:---:|:---:|:---:|
 |AutoEncoder|tabular, time series|linear, reconstruction-based|
@@ -86,6 +87,9 @@ python -m pip install catchMinor
 |GAN|tabular, time series|linear, reconstruction-based|
 |AnomalyTransformer|time series|transformer|
 |DLienar|time series|linear, pred-based|
+|NLienar|time series|linear, pred-based|
+
+### Imbalanced Learning
 
 ## Contribute
 - follow gitflow & forkflow
@@ -95,7 +99,7 @@ python -m pip install catchMinor
     - `feature/{work}`: feature branch
     - `release/{version}`: temporary branch before release
     - `hotfix`: bugfix branch based on master branch
-- merge
+- merge (main contributor)
     - merge from `feature` branch to `develop` branch: `merge squash`
     - else: `merge --no-ff`
 - example
