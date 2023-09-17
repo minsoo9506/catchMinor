@@ -49,7 +49,7 @@ TensorBoard_logger = TensorBoardLogger(
     save_dir="./log", name="AutoEncoder", version="0.1"
 )
 
-early_stopping_callback = EarlyStopping(monitor="val_loss", mode="min", patience=2)
+early_stopping_callback = EarlyStopping(monitor="valid_loss", mode="min", patience=2)
 
 trainer = Trainer(
     log_every_n_steps=1,
@@ -79,10 +79,17 @@ python -m pip install catchMinor
     - (paper) [Current Time Series Anomaly Detection Benchmarks are Flawed and are Creating the Illusion of Progress](https://arxiv.org/abs/2009.13807)
 
 ## Implemented Algorithms
+### Anomaly Detection
 |model|data|desc|
 |:---:|:---:|:---:|
-|AutoEncoder|tabular, time series|fully-connected layer|
-|VAE|tabular, time series|fully-connected layer|
+|AutoEncoder|tabular, time series|linear, reconstruction-based|
+|VAE|tabular, time series|linear, reconstruction-based|
+|GAN|tabular, time series|linear, reconstruction-based|
+|AnomalyTransformer|time series|transformer|
+|DLienar|time series|linear, pred-based|
+|NLienar|time series|linear, pred-based|
+
+### Imbalanced Learning
 
 ## Contribute
 - follow gitflow & forkflow
@@ -92,7 +99,7 @@ python -m pip install catchMinor
     - `feature/{work}`: feature branch
     - `release/{version}`: temporary branch before release
     - `hotfix`: bugfix branch based on master branch
-- merge
+- merge (main contributor)
     - merge from `feature` branch to `develop` branch: `merge squash`
     - else: `merge --no-ff`
 - example

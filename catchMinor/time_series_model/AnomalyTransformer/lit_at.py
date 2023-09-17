@@ -100,11 +100,12 @@ class LitAnomalyTransformer(LitBaseModel):
     def test_step(self, batch, batch_idx):
         pass
 
-    def get_anomaly_score(self, batch) -> torch.Tensor:
+    def get_anomaly_score(self, batch, data_type: str = "time_series") -> torch.Tensor:
         """get anomaly score in each points
 
         Args:
             batch (torch.Tensor): |batch| = (batch_size, input_length(window_size), feature_dim), non overlaps window
+            data_type (str): fixed as 'time_series'
 
         Returns:
             anomaly score (torch.Tensor): anomaly score of each points

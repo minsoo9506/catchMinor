@@ -56,11 +56,12 @@ class LitVAE(LitBaseModel):
         loss = loss_function(output_x, x, mu, logvar)
         self.log("test_loss", loss, on_epoch=True, prog_bar=True)
 
-    def get_anomaly_score(self, batch) -> torch.Tensor:
+    def get_anomaly_score(self, batch, data_type: str) -> torch.Tensor:
         """get anomaly score
 
         Args:
             batch (torch.Tensor): _description_
+            data_type (str): 'tabular' or 'time_series'
 
         Returns:
             anomaly score (torch.Tensor): mean(abs(true - pred), dim=1)
@@ -68,7 +69,12 @@ class LitVAE(LitBaseModel):
         x, y = batch
         output, _, _ = self.model(x)
         anomaly_score = torch.abs(y - output)
-        return torch.mean(anomaly_score, dim=1)
+        if data_type == "tabular":
+            return torch.mean(anomaly_score, dim=1)
+        elif data_type == "time_series":
+            return torch.mean(anomaly_score, dim=2)
+        else:
+            raise ValueError("data_type should be 'tabular' or 'time_series'!")
 
     def _configure_loss_func(self, loss_func_config: VAE_loss_func_config):
         pass
